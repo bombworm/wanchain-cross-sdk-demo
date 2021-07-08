@@ -51,10 +51,12 @@ class App extends React.Component {
       console.log({account});
       let balance = await this.bridge.getAccountAsset(assetPair, "mint", account);
       console.log({balance});
+      // TODO: check balance
+      let fee = await this.bridge.estimateFee(assetPair, "mint");
+      // TODO: accept fee or cancel the task
+      console.log({fee});
       let task = await this.bridge.createTask(assetPair, 'mint', this.state.amount, '0x9D54FB4a5e5467CF3DBc904bcABD5EFC38b76344');
       await task.init();
-      console.log("deposit fee(%s): operateFee=%s, networkFee=%s", assetPair.fromChainType, task.operateFee, task.networkFee);
-      // TODO: accept fee or cancel the task
       task.start();
       this.setState({message: "start deposit task " + task.id});
     } catch(err) {
@@ -65,9 +67,15 @@ class App extends React.Component {
   async withdraw() {
     let assetPair = this.state.assetPairs[this.state.pairIndex];
     try {
-      let task = await this.bridge.createTask(assetPair, 'burn', this.state.amount, '0x9D54FB4a5e5467CF3DBc904bcABD5EFC38b76344');
-      console.log("withdraw fee(%s): operateFee=%s, networkFee=%s", assetPair.toChainType, task.operateFee, task.networkFee);
+      let account = this.bridge.getWalletAccount(assetPair, "burn");
+      console.log({account});
+      let balance = await this.bridge.getAccountAsset(assetPair, "burn", account);
+      console.log({balance});
+      // TODO: check balance
+      let fee = await this.bridge.estimateFee(assetPair, "burn");
+      console.log({fee});
       // TODO: accept fee or cancel the task
+      let task = await this.bridge.createTask(assetPair, 'burn', this.state.amount, '0x9D54FB4a5e5467CF3DBc904bcABD5EFC38b76344');
       task.start();
       this.setState({message: "start withdraw task " + task.id});
     } catch(err) {

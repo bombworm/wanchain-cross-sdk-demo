@@ -23,6 +23,8 @@ class App extends React.Component {
     this.bridge = new WanBridge("testnet");
     this.bridge.on("ready", assetPairs => {
       this.setState({assetPairs, asset: assetPairs.length? assetPairs[0].assetType : ''});
+      let history = this.bridge.getHistory();
+      console.log({history});
     }).on("error", info => {
       this.setState({message: "error: " + JSON.stringify(info)});
     }).on("account", info => {
@@ -89,7 +91,6 @@ class App extends React.Component {
       pairIndex,
       asset: this.state.assetPairs[pairIndex].assetType
     });
-    console.log({pairIndex});
   }
 
   onChangeAmount = event => {

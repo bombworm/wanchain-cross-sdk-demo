@@ -2,7 +2,7 @@ import React from 'react';
 import logo from './logo.svg';
 import './App.css';
 
-const { WanBridge } = require('wanchain-cross-sdk');
+import { WanBridge } from 'wanchain-cross-sdk'
 
 const iwanAuth = {
   apiKey: "dd5dceb07ae111aaa2693ccaef4e5f049d0b2bc089bee2adbf0509531f867f59",
@@ -22,6 +22,8 @@ class App extends React.Component {
     }
     this.bridge = new WanBridge("testnet");
     this.bridge.on("ready", assetPairs => {
+      let isReady = this.bridge.isReady();
+      console.log({isReady});
       this.setState({assetPairs, asset: assetPairs.length? assetPairs[0].assetType : ''});
       let history = this.bridge.getHistory();
       console.log({history});
@@ -42,24 +44,35 @@ class App extends React.Component {
     await this.bridge.init(iwanAuth);
   }
 
-  async collectWallet() {
+  async connectMetaMask() {
     return this.bridge.connectMetaMask();
+  }
+
+  async connectPolkadot() {
+    return this.bridge.connectPolkadot();
   }
 
   async deposit() {
     let assetPair = this.state.assetPairs[this.state.pairIndex];
+    console.log({assetPair});
     try {
       let account = this.bridge.getWalletAccount(assetPair, "mint");
       console.log({account});
+      if (Array.isArray(account)) {
+        account = account[0];
+      }
       let balance = await this.bridge.getAccountAsset(assetPair, "mint", account);
       console.log({balance});
       // TODO: check balance
       let fee = await this.bridge.estimateFee(assetPair, "mint");
-      // TODO: accept fee or cancel the task
       console.log({fee});
-      let task = await this.bridge.createTask(assetPair, 'mint', this.state.amount, '0x9D54FB4a5e5467CF3DBc904bcABD5EFC38b76344');
-      await task.init();
-      task.start();
+      // TODO: accept fee or cancel the task
+      let quota = await this.bridge.getQuota(assetPair, "mint");
+      console.log({quota});
+      // TODO: check amount is between minQuota and maxQuota
+      let validTo = this.bridge.validateToAccount(assetPair, "mint", this.state.receiver || account);
+      console.log("validTo %s: %s", this.state.receiver || account, validTo);
+      let task = await this.bridge.createTask(assetPair, 'mint', this.state.amount, account, this.state.receiver);
       this.setState({message: "start deposit task " + task.id});
     } catch(err) {
       this.setState({message: err});
@@ -68,6 +81,7 @@ class App extends React.Component {
 
   async withdraw() {
     let assetPair = this.state.assetPairs[this.state.pairIndex];
+    console.log({assetPair});
     try {
       let account = this.bridge.getWalletAccount(assetPair, "burn");
       console.log({account});
@@ -77,8 +91,12 @@ class App extends React.Component {
       let fee = await this.bridge.estimateFee(assetPair, "burn");
       console.log({fee});
       // TODO: accept fee or cancel the task
-      let task = await this.bridge.createTask(assetPair, 'burn', this.state.amount, '0x9D54FB4a5e5467CF3DBc904bcABD5EFC38b76344');
-      task.start();
+      let quota = await this.bridge.getQuota(assetPair, "mint");
+      console.log({quota});
+      // TODO: check amount is between minQuota and maxQuota
+      let validTo = this.bridge.validateToAccount(assetPair, "burn", this.state.receiver || account);
+      console.log("validTo %s: %s", this.state.receiver || account, validTo);
+      let task = await this.bridge.createTask(assetPair, 'burn', this.state.amount, account, this.state.receiver);
       this.setState({message: "start withdraw task " + task.id});
     } catch(err) {
       this.setState({message: err});
@@ -125,7 +143,9 @@ class App extends React.Component {
               }
             </select>
             &nbsp;&nbsp;
-            <button onClick={() => this.collectWallet()}>Connect MetaMask</button>
+            <button onClick={() => this.connectMetaMask()}>Connect MetaMask</button>
+            &nbsp;
+            <button onClick={() => this.connectPolkadot()}>Connect Polkadot</button>
           </p>
           <p>
             amount: <input type="text" value={this.state.amount} onChange={this.onChangeAmount}/>

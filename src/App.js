@@ -45,7 +45,11 @@ class App extends React.Component {
   }
 
   async connectMetaMask() {
-    return this.bridge.connectMetaMask();
+    try {
+      await this.bridge.connectMetaMask();
+    } catch (err) {
+      console.error("connectMetaMask error: %O", err);
+    }
   }
 
   async connectPolkadot() {

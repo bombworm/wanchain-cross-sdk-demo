@@ -30,6 +30,7 @@ class App extends React.Component {
     }).on("error", info => {
       this.setState({message: "error: " + JSON.stringify(info)});
     }).on("account", info => {
+      console.log("account event: %O", info);
       this.setState({message: "account: " + JSON.stringify(info)});
     }).on("ota", info => {
       this.setState({message: "ota: " + JSON.stringify(info)});
@@ -46,14 +47,20 @@ class App extends React.Component {
 
   async connectMetaMask() {
     try {
-      await this.bridge.connectMetaMask();
-    } catch (err) {
+      let account = await this.bridge.connectMetaMask();
+      console.log("connectMetaMask: %s", account);
+    } catch(err) {
       console.error("connectMetaMask error: %O", err);
     }
   }
 
   async connectPolkadot() {
-    return this.bridge.connectPolkadot();
+    try {
+      let accounts = await this.bridge.connectPolkadot();
+      console.log("connectPolkadot: %O", accounts);
+    } catch(err) {
+      console.error("connectPolkadot error: %O", err);
+    }
   }
 
   async deposit() {
@@ -118,7 +125,6 @@ class App extends React.Component {
   onChangeAmount = event => {
     let amount = event.target.value;
     this.setState({amount});
-    console.log({amount});
   }
 
   onChangeReceiver = event => {

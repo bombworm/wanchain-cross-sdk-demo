@@ -37,6 +37,7 @@ class App extends React.Component {
     }).on("lock", info => {
       this.setState({message: "lock: " + JSON.stringify(info)});
     }).on("redeem", info => {
+      console.log("redeem event: %O", info);
       this.setState({message: "redeem: " + JSON.stringify(info)});
     });
   }

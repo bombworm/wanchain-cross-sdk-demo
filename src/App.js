@@ -18,7 +18,8 @@ class App extends React.Component {
       asset: '',
       receiver: '',
       amount: '0',
-      message: ""
+      message: "",
+      task: null
     }
     this.bridge = new WanBridge("testnet");
     this.bridge.on("ready", assetPairs => {
@@ -39,6 +40,9 @@ class App extends React.Component {
     }).on("redeem", info => {
       console.log("redeem event: %O", info);
       this.setState({message: "redeem: " + JSON.stringify(info)});
+    }).on("cancel", info => {
+      console.log("cancel event: %O", info);
+      this.setState({message: "cancel: " + JSON.stringify(info)});
     });
   }
 
@@ -85,9 +89,9 @@ class App extends React.Component {
       let validTo = this.bridge.validateToAccount(assetPair, "mint", this.state.receiver || account);
       console.log("validTo %s: %s", this.state.receiver || account, validTo);
       let task = await this.bridge.createTask(assetPair, 'mint', this.state.amount, account, this.state.receiver);
-      this.setState({message: "start deposit task " + task.id});
+      this.setState({task, message: "start deposit task " + task.id});
     } catch(err) {
-      this.setState({message: err});
+      this.setState({task: null, message: err});
     }
   }
 
@@ -109,9 +113,19 @@ class App extends React.Component {
       let validTo = this.bridge.validateToAccount(assetPair, "burn", this.state.receiver || account);
       console.log("validTo %s: %s", this.state.receiver || account, validTo);
       let task = await this.bridge.createTask(assetPair, 'burn', this.state.amount, account, this.state.receiver);
-      this.setState({message: "start withdraw task " + task.id});
+      this.setState({task, message: "start withdraw task " + task.id});
     } catch(err) {
-      this.setState({message: err});
+      this.setState({task: null, message: err});
+    }
+  }
+
+  async cancel() {
+    let task = this.state.task;
+    if (task) {
+      task.cancel();
+      console.log("cancel task %s", task.id);
+    } else {
+      console.log("no task");
     }
   }
 
@@ -168,6 +182,8 @@ class App extends React.Component {
             <button onClick={() => this.deposit()}>Deposit {this.state.asset}</button>
             &nbsp;&nbsp;
             <button onClick={() => this.withdraw()}>Withdraw {this.state.asset}</button>
+            &nbsp;&nbsp;
+            <button onClick={() => this.cancel()}>Cancel task</button>
           </p>
           <p style={{color: "white"}}>{this.state.message}</p>
         </header>

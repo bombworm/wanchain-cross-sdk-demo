@@ -40,9 +40,6 @@ class App extends React.Component {
     }).on("redeem", info => {
       console.log("redeem event: %O", info);
       this.setState({message: "redeem: " + JSON.stringify(info)});
-    }).on("cancel", info => {
-      console.log("cancel event: %O", info);
-      this.setState({message: "cancel: " + JSON.stringify(info)});
     });
   }
 
@@ -122,7 +119,7 @@ class App extends React.Component {
   async cancel() {
     let task = this.state.task;
     if (task) {
-      task.cancel();
+      this.bridge.cancelTask(task.id);
       console.log("cancel task %s", task.id);
     } else {
       console.log("no task");

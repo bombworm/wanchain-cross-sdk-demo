@@ -2,7 +2,7 @@ import React from 'react';
 import logo from './logo.svg';
 import './App.css';
 
-import { WanBridge } from 'wanchain-cross-sdk'
+import { WanBridge, Wallet } from 'wanchain-cross-sdk'
 
 const iwanAuth = {
   apiKey: "dd5dceb07ae111aaa2693ccaef4e5f049d0b2bc089bee2adbf0509531f867f59",
@@ -48,20 +48,23 @@ class App extends React.Component {
   }
 
   async connectMetaMask() {
-    try {
-      let account = await this.bridge.connectMetaMask();
-      console.log("connectMetaMask: %s", account);
-    } catch(err) {
-      console.error("connectMetaMask error: %O", err);
-    }
+    this.metaMaskWallet = new Wallet("MetaMask", window.ethereum);
+    console.log("collect MetaMask");
   }
 
   async connectPolkadot() {
-    try {
-      let accounts = await this.bridge.connectPolkadot();
-      console.log("connectPolkadot: %O", accounts);
-    } catch(err) {
-      console.error("connectPolkadot error: %O", err);
+    let provider = (this.bridge.network === "mainnet")? "wss://nodes.wandevs.org/polkadot" : "wss://nodes-testnet.wandevs.org/polkadot";
+    this.polkadotWallet = new Wallet("polkadot{.js}", provider);
+    console.log("collect polkadot{.js}");
+  }
+
+  chooseWallet(chainType) {
+    if (["BTC", "LTC", "XRP"].includes(chainType)) {
+      return null;
+    } else if (chainType === "DOT") {
+      return this.polkadotWallet;
+    } else {
+      return this.metaMaskWallet;
     }
   }
 
@@ -69,23 +72,29 @@ class App extends React.Component {
     let assetPair = this.state.assetPairs[this.state.pairIndex];
     console.log({assetPair});
     try {
-      let account = this.bridge.getWalletAccount(assetPair, "mint");
-      console.log({account});
-      if (Array.isArray(account)) {
-        account = account[0];
+      let sender = "";
+      let wallet = this.chooseWallet(assetPair.fromChainType);
+      console.log({wallet});
+      if (wallet) {
+        let checkWallet = await this.bridge.checkWallet(assetPair, "mint", wallet);
+        console.log({checkWallet});
+        // TODO: check wallet
+        let accounts = await wallet.getAccounts();
+        console.log({accounts});
+        sender = accounts[0];
+        let balance = await this.bridge.getAccountAsset(assetPair, "mint", sender, false, wallet);
+        console.log({balance});
+        // TODO: check balance
       }
-      let balance = await this.bridge.getAccountAsset(assetPair, "mint", account);
-      console.log({balance});
-      // TODO: check balance
       let fee = await this.bridge.estimateFee(assetPair, "mint");
       console.log({fee});
       // TODO: accept fee or cancel the task
       let quota = await this.bridge.getQuota(assetPair, "mint");
       console.log({quota});
       // TODO: check amount is between minQuota and maxQuota
-      let validTo = this.bridge.validateToAccount(assetPair, "mint", this.state.receiver || account);
-      console.log("validTo %s: %s", this.state.receiver || account, validTo);
-      let task = await this.bridge.createTask(assetPair, 'mint', this.state.amount, account, this.state.receiver);
+      let validTo = this.bridge.validateToAccount(assetPair, "mint", this.state.receiver);
+      console.log("validTo %s: %s", this.state.receiver, validTo);
+      let task = await this.bridge.createTask(assetPair, 'mint', this.state.amount, sender, this.state.receiver, wallet);
       this.setState({task, message: "start deposit task " + task.id});
     } catch(err) {
       this.setState({task: null, message: err});
@@ -96,20 +105,28 @@ class App extends React.Component {
     let assetPair = this.state.assetPairs[this.state.pairIndex];
     console.log({assetPair});
     try {
-      let account = this.bridge.getWalletAccount(assetPair, "burn");
-      console.log({account});
-      let balance = await this.bridge.getAccountAsset(assetPair, "burn", account);
-      console.log({balance});
-      // TODO: check balance
+      let sender = "";
+      let wallet = this.chooseWallet(assetPair.toChainType);
+      if (wallet) {
+        let checkWallet = await this.bridge.checkWallet(assetPair, "burn", wallet);
+        console.log({checkWallet});
+        // TODO: check wallet
+        let accounts = await wallet.getAccounts();
+        console.log({accounts});
+        sender = accounts[0];
+        let balance = await this.bridge.getAccountAsset(assetPair, "burn", sender, false, wallet);
+        console.log({balance});
+        // TODO: check balance
+      }
       let fee = await this.bridge.estimateFee(assetPair, "burn");
       console.log({fee});
       // TODO: accept fee or cancel the task
       let quota = await this.bridge.getQuota(assetPair, "mint");
       console.log({quota});
       // TODO: check amount is between minQuota and maxQuota
-      let validTo = this.bridge.validateToAccount(assetPair, "burn", this.state.receiver || account);
-      console.log("validTo %s: %s", this.state.receiver || account, validTo);
-      let task = await this.bridge.createTask(assetPair, 'burn', this.state.amount, account, this.state.receiver);
+      let validTo = this.bridge.validateToAccount(assetPair, "burn", this.state.receiver);
+      console.log("validTo %s: %s", this.state.receiver, validTo);
+      let task = await this.bridge.createTask(assetPair, 'burn', this.state.amount, sender, this.state.receiver, wallet);
       this.setState({task, message: "start withdraw task " + task.id});
     } catch(err) {
       this.setState({task: null, message: err});

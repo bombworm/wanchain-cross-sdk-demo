@@ -2,7 +2,7 @@ import React from 'react';
 import logo from './logo.svg';
 import './App.css';
 
-import { WanBridge, Wallet } from 'wanchain-cross-sdk'
+import { WanBridge, Wallet } from 'wanchain-cross-sdk';
 
 const iwanAuth = {
   apiKey: "dd5dceb07ae111aaa2693ccaef4e5f049d0b2bc089bee2adbf0509531f867f59",
@@ -30,9 +30,6 @@ class App extends React.Component {
       console.log({history});
     }).on("error", info => {
       this.setState({message: "error: " + JSON.stringify(info)});
-    }).on("account", info => {
-      console.log("account event: %O", info);
-      this.setState({message: "account: " + JSON.stringify(info)});
     }).on("ota", info => {
       this.setState({message: "ota: " + JSON.stringify(info)});
     }).on("lock", info => {
@@ -82,7 +79,7 @@ class App extends React.Component {
         let accounts = await wallet.getAccounts();
         console.log({accounts});
         sender = accounts[0];
-        let balance = await this.bridge.getAccountAsset(assetPair, "mint", sender, false, wallet);
+        let balance = await this.bridge.getAccountAsset(assetPair, "mint", sender, false);
         console.log({balance});
         // TODO: check balance
       }
@@ -114,7 +111,7 @@ class App extends React.Component {
         let accounts = await wallet.getAccounts();
         console.log({accounts});
         sender = accounts[0];
-        let balance = await this.bridge.getAccountAsset(assetPair, "burn", sender, false, wallet);
+        let balance = await this.bridge.getAccountAsset(assetPair, "burn", sender, false);
         console.log({balance});
         // TODO: check balance
       }

@@ -10,7 +10,7 @@
     "react-dom": "^17.0.2",
     "react-scripts": "4.0.3",
     "web-vitals": "^1.1.2",
-    "wanchain-cross-sdk": "git+https://github.com/zhwir/wanchain-cross-sdk.git"
+    "wanchain-cross-sdk": "^1.0.0"
   },
   "scripts": {
     "start": "react-scripts start",

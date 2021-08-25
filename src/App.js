@@ -118,7 +118,7 @@ class App extends React.Component {
       let fee = await this.bridge.estimateFee(assetPair, "burn");
       console.log({fee});
       // TODO: accept fee or cancel the task
-      let quota = await this.bridge.getQuota(assetPair, "mint");
+      let quota = await this.bridge.getQuota(assetPair, "burn");
       console.log({quota});
       // TODO: check amount is between minQuota and maxQuota
       let validTo = this.bridge.validateToAccount(assetPair, "burn", this.state.receiver);
